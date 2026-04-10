@@ -1,0 +1,21 @@
+{
+  "name": "zaobao-factory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/run-tests.js",
+    "digest": "node src/cli/build-digest.js",
+    "render": "node src/cli/render-digest.js",
+    "build": "node src/cli/build-digest.js --help"
+  },
+  "dependencies": {
+    "@remotion/bundler": "^4.0.340",
+    "@remotion/renderer": "^4.0.340",
+    "fast-xml-parser": "^4.5.0",
+    "ffmpeg-static": "^5.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.340"
+  }
+}

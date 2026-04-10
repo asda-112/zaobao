@@ -1,0 +1,9 @@
+[
+  {
+    "id": "sample-fixture",
+    "type": "fixture",
+    "name": "Sample Fixture",
+    "path": "data/fixtures/sample-ai-news.json",
+    "tags": ["ai", "fixture"]
+  }
+]

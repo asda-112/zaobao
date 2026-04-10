@@ -1,0 +1,57 @@
+[
+  {
+    "id": "fixture-1",
+    "title": "OpenAI previews a lighter realtime voice workflow",
+    "source": "Fixture Feed",
+    "url": "https://example.com/openai-realtime",
+    "publishedAt": "2026-04-10T05:20:00.000Z",
+    "content": "OpenAI previewed a lighter realtime voice workflow with faster responses and a more creator-friendly speaking style.",
+    "lang": "en",
+    "tags": ["openai", "voice"],
+    "score": 93
+  },
+  {
+    "id": "fixture-2",
+    "title": "Google shows a coding-focused Gemini agent workflow",
+    "source": "Fixture Feed",
+    "url": "https://example.com/gemini-agent",
+    "publishedAt": "2026-04-10T04:40:00.000Z",
+    "content": "Google showed a coding-focused Gemini workflow that can inspect repositories, draft plans, and execute focused edits.",
+    "lang": "en",
+    "tags": ["google", "gemini", "coding"],
+    "score": 89
+  },
+  {
+    "id": "fixture-3",
+    "title": "Alibaba refreshes Qwen multimodal understanding",
+    "source": "Fixture Feed",
+    "url": "https://example.com/qwen-multimodal",
+    "publishedAt": "2026-04-10T04:00:00.000Z",
+    "content": "Alibaba refreshed Qwen multimodal understanding with stronger video comprehension and more grounded image reasoning.",
+    "lang": "zh",
+    "tags": ["qwen", "multimodal"],
+    "score": 88
+  },
+  {
+    "id": "fixture-4",
+    "title": "ByteDance shares a compact multilingual coding model",
+    "source": "Fixture Feed",
+    "url": "https://example.com/bytedance-coder",
+    "publishedAt": "2026-04-10T03:20:00.000Z",
+    "content": "ByteDance shared a compact multilingual coding model aimed at strong tool use and practical developer tasks.",
+    "lang": "zh",
+    "tags": ["bytedance", "coding"],
+    "score": 86
+  },
+  {
+    "id": "fixture-5",
+    "title": "xAI expands Grok image editing controls",
+    "source": "Fixture Feed",
+    "url": "https://example.com/grok-image",
+    "publishedAt": "2026-04-10T02:50:00.000Z",
+    "content": "xAI expanded Grok image editing controls, making it easier to refine style, layout, and text elements in one pass.",
+    "lang": "en",
+    "tags": ["xai", "image"],
+    "score": 82
+  }
+]
