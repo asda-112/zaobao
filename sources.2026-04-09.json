@@ -1,0 +1,9 @@
+[
+  {
+    "id": "real-ai-news-2026-04-09",
+    "type": "fixture",
+    "name": "Real AI News 2026-04-09",
+    "path": "data/fixtures/2026-04-09-real-ai-news.json",
+    "tags": ["ai", "daily", "real"]
+  }
+]

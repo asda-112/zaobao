@@ -1,0 +1,68 @@
+[
+  {
+    "id": "2026-04-09-openai-cyber",
+    "title": "OpenAI 正在准备面向受信任伙伴的网络安全产品",
+    "source": "Axios / OpenAI",
+    "url": "https://www.axios.com/2026/04/09/openai-new-model-cyber-mythos-anthopic",
+    "publishedAt": "2026-04-09T09:00:06.000Z",
+    "content": "Axios 披露 OpenAI 正在为少数合作方准备一款更强的网络安全产品，预计将通过 2 月上线的 Trusted Access for Cyber 计划受限发布。结合 OpenAI 此前对 GPT-5.3-Codex 和防御型网络安全场景的表态，这说明前沿模型在攻防两端的能力已经强到需要以身份和用途为前提分发。",
+    "lang": "zh",
+    "tags": ["openai", "cybersecurity", "policy"],
+    "score": 95
+  },
+  {
+    "id": "2026-04-09-anthropic-managed-agents",
+    "title": "Anthropic 推出 Managed Agents，开始卖“托管式 agent 基础设施”",
+    "source": "Anthropic Engineering",
+    "url": "https://www.anthropic.com/engineering/managed-agents",
+    "publishedAt": "2026-04-09T07:00:00.000Z",
+    "content": "Anthropic 发布 Managed Agents，将长任务 agent 所需的 session、harness 和 sandbox 抽象成托管服务，让开发者不再自己搭容器、上下文压缩和工具执行层。它本质上不是再发一个模型，而是把 agent 运行时产品化，信号是 AI 平台竞争已经从模型能力转向整套 agent 基础设施。",
+    "lang": "zh",
+    "tags": ["anthropic", "agent", "developer", "workflow"],
+    "score": 93
+  },
+  {
+    "id": "2026-04-09-meta-muse-spark",
+    "title": "Meta 发布 Muse Spark，正式把重心从 Llama 叙事转向新一代闭源产品化模型",
+    "source": "Meta Newsroom",
+    "url": "https://about.fb.com/news/2026/04/introducing-muse-spark-meta-superintelligence-labs-first-model-built-to-prioritize-people/amp/",
+    "publishedAt": "2026-04-08T20:00:00.000Z",
+    "content": "Meta 宣布 Muse Spark 成为 Meta Superintelligence Labs 的首个模型，并已用于 Meta AI app 和网页端，后续还会进入 WhatsApp、Instagram、Facebook、Messenger 和 AI 眼镜。相比过去强调开源心智的 Llama，这次更明显是围绕自家产品与分发入口打造的闭源能力栈。",
+    "lang": "zh",
+    "tags": ["meta", "model", "product", "multimodal"],
+    "score": 91
+  },
+  {
+    "id": "2026-04-09-google-notebooks",
+    "title": "Google 把 Notebooks 引入 Gemini，并与 NotebookLM 打通",
+    "source": "Google The Keyword",
+    "url": "https://blog.google/innovation-and-ai/products/gemini-app/notebooks-gemini-notebooklm/",
+    "publishedAt": "2026-04-08T16:00:00.000Z",
+    "content": "Google 在 Gemini 中上线 Notebooks，让用户把聊天、文件和自定义指令组织进同一个项目空间，并与 NotebookLM 双向同步。这个更新的价值不只是“多了个文件夹”，而是 Gemini 正在补齐长期项目上下文与知识工作流，这会直接对标 ChatGPT Projects 一类能力。",
+    "lang": "zh",
+    "tags": ["google", "gemini", "product", "notebooklm"],
+    "score": 89
+  },
+  {
+    "id": "2026-04-09-anthropic-mythos",
+    "title": "Anthropic 只向少数伙伴预览 Mythos，原因是它找漏洞太强",
+    "source": "TechCrunch / Axios",
+    "url": "https://techcrunch.com/2026/04/07/anthropic-mythos-ai-model-preview-security/",
+    "publishedAt": "2026-04-07T18:00:00.000Z",
+    "content": "Anthropic 预览了新模型 Mythos，但没有公开开放，而是只给少数科技与安全公司用于防御性安全工作。公司称该模型在测试中发现了大量高危与零日漏洞，这让它成为又一个说明前沿模型已逼近“高风险双用途能力”阈值的案例。",
+    "lang": "zh",
+    "tags": ["anthropic", "model", "cybersecurity", "security"],
+    "score": 88
+  },
+  {
+    "id": "2026-04-09-google-overviews-study",
+    "title": "Google AI Overviews 再被质疑准确率，91% 听起来不低但规模化后仍很吓人",
+    "source": "Ars Technica / Oumi / NYT",
+    "url": "https://arstechnica.com/google/2026/04/analysis-finds-google-ai-overviews-is-wrong-10-percent-of-the-time/",
+    "publishedAt": "2026-04-07T19:53:00.000Z",
+    "content": "围绕 Oumi 与纽约时报分析结果的报道显示，Google AI Overviews 的正确率大约在 91% 左右，较早前版本有所改善，但按 Google 搜索体量外推，绝对错误量仍可能极高。更关键的是，这类搜索式生成产品即便“多数正确”，在健康、金融和历史事实等高频查询里也仍会持续放大误导风险，而 Google 也对该评测方法提出异议。",
+    "lang": "zh",
+    "tags": ["google", "search", "research", "insight"],
+    "score": 84
+  }
+]
