@@ -1,4 +1,12 @@
 import './build-digest.test.js';
+import './platform-render-jobs.test.js';
 import './source-and-timeline.test.js';
 import './cli.test.js';
 import './ffmpeg-render.test.js';
+import './review-workflow.test.js';
+import './opencli.test.js';
+import './audio-runtime.test.js';
+import './quality-mode.test.js';
+import './remotion-renderer.test.js';
+import './wav-duration.test.js';
+import './xiaohongshu-cards.test.js';

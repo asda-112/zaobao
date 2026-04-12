@@ -1,0 +1,10 @@
+[
+  {
+    "id": "real-web-fixture-2026-04-10",
+    "type": "fixture",
+    "name": "Real Web Research 2026-04-10",
+    "path": "data/fixtures/2026-04-10-real-ai-news.json",
+    "tags": ["ai", "real-web", "manual-research"],
+    "baseScore": 76
+  }
+]

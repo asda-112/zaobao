@@ -17,11 +17,11 @@ export async function collectUrlItem({source}) {
   const html = await response.text();
   return {
     id: `${source.id}-0`,
-    title: pickTitle(html, source.url),
+    title: source.titleOverride || pickTitle(html, source.url),
     source: source.name,
     url: source.url,
-    publishedAt: new Date().toISOString(),
-    content: stripHtml(html).slice(0, 900),
+    publishedAt: source.publishedAt || new Date().toISOString(),
+    content: source.contentOverride || stripHtml(html).slice(0, 900),
     lang: source.lang || 'unknown',
     tags: source.tags || [],
     score: source.baseScore ?? 62

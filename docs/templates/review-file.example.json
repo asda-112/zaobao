@@ -1,0 +1,28 @@
+{
+  "issues": [
+    {
+      "id": "issue-1",
+      "status": "approved",
+      "notes": "事实清晰，直接发布"
+    },
+    {
+      "id": "issue-2",
+      "status": "edited",
+      "notes": "标题与结论改为中文表达",
+      "override": {
+        "title": "Google 发布新一代推理能力",
+        "oneLineConclusion": "核心是推理成本下降并保持质量",
+        "whyImportant": "对开发者工具链和产品推理成本有直接影响",
+        "keyFacts": [
+          "推理效率显著提升",
+          "多语言任务表现更稳定"
+        ]
+      }
+    },
+    {
+      "id": "issue-3",
+      "status": "rejected",
+      "notes": "与 issue-1 属于同一事件，去重"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import {mkdir} from 'node:fs/promises';
+import {mkdir, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -7,14 +7,18 @@ import {collectCandidatesSafely, loadSources} from '../collectors/index.js';
 import {defaultSources} from '../config/default-sources.js';
 import {buildDigestPlan} from '../core/build-digest.js';
 import {createDailyPackage} from '../core/create-daily-package.js';
+import {assertHighQualityCollection, assertHighQualitySources, ensureHighQualityRenderAllowed} from '../core/quality-mode.js';
+import {applyReviewToIssues, loadReviewData} from '../core/review-workflow.js';
 import {writeDailyPackage} from '../core/write-daily-package.js';
 import {renderPackageVideos} from '../render/render-package.js';
+import {renderXiaohongshuCards} from '../render/xiaohongshu-cards.js';
 
 function parseArgs(argv) {
   const args = {
     date: new Date().toISOString().slice(0, 10),
     output: 'output',
     sources: null,
+    reviewFile: null,
     skipRender: false,
     help: false
   };
@@ -24,6 +28,7 @@ function parseArgs(argv) {
     if (arg === '--date') args.date = argv[index + 1];
     if (arg === '--output') args.output = argv[index + 1];
     if (arg === '--sources') args.sources = argv[index + 1];
+    if (arg === '--review-file') args.reviewFile = argv[index + 1];
     if (arg === '--skip-render') args.skipRender = true;
     if (arg === '--help') args.help = true;
   }
@@ -38,6 +43,7 @@ Options:
   --date YYYY-MM-DD   Digest date, defaults to today
   --output DIR        Output directory, defaults to ./output
   --sources FILE      JSON sources file
+  --review-file FILE  Optional issue review decision JSON file
   --skip-render       Skip video rendering and write placeholder buffers
   --help              Show this help text`);
 }
@@ -59,6 +65,9 @@ async function main() {
 export async function buildDigestPackage(options = {}) {
   const cwd = process.cwd();
   const args = {...parseArgs(process.argv.slice(2)), ...options};
+  const allowFixtureSources = options.allowFixtureSources === true;
+  const allowPartialCollection = options.allowPartialCollection === true;
+  const allowSkipRender = options.allowSkipRender === true;
   if (args.help) {
     printHelp();
     return;
@@ -69,7 +78,13 @@ export async function buildDigestPackage(options = {}) {
     sourcesPath: args.sources,
     defaultSources
   });
+  if (!allowFixtureSources) {
+    assertHighQualitySources({sources});
+  }
   const collection = await collectCandidatesSafely({cwd, sources});
+  if (!allowPartialCollection) {
+    assertHighQualityCollection({collection});
+  }
 
   const digestPlan = buildDigestPlan({
     candidates: collection.items,
@@ -79,14 +94,22 @@ export async function buildDigestPackage(options = {}) {
       targetDurationSeconds: 210,
       minDurationSeconds: 180,
       maxDurationSeconds: 240,
-      maxIssues: 8,
+      maxIssues: 6,
       theme: themeConfig()
     }
   });
 
+  const reviewData = await loadReviewData({cwd, reviewPath: args.reviewFile});
+  const reviewResult = applyReviewToIssues({issues: digestPlan.issues, reviewData});
+  const reviewedDigestPlan = {
+    ...digestPlan,
+    issues: reviewResult.issues,
+    reviewSummary: reviewResult.summary
+  };
+
   const dailyPackage = createDailyPackage({
     date: args.date,
-    digestPlan,
+    digestPlan: reviewedDigestPlan,
     config: {
       theme: themeConfig(),
       targetPlatforms: ['wechat', 'bilibili', 'douyin', 'xiaohongshu']
@@ -95,21 +118,37 @@ export async function buildDigestPackage(options = {}) {
 
   dailyPackage.reviewReport = `${dailyPackage.reviewReport}\n- 采集失败源：${collection.failures.length}`;
 
+  if (reviewData) {
+    dailyPackage.reviewReport = `${dailyPackage.reviewReport}\n- 审校统计：approved ${reviewResult.summary.approved} / edited ${reviewResult.summary.edited} / rejected ${reviewResult.summary.rejected} / pending ${reviewResult.summary.pending}`;
+  }
+
+  if (!allowSkipRender) {
+    ensureHighQualityRenderAllowed({skipRender: args.skipRender});
+  }
   if (args.skipRender) {
     dailyPackage.videoOutputs = {
       bilibili: Buffer.from('skip-render-bilibili'),
       douyin: Buffer.from('skip-render-douyin'),
-      xiaohongshu: Buffer.from('skip-render-xiaohongshu')
+      douyinClips: [Buffer.from('skip-render-douyin-1')]
     };
+    dailyPackage.xiaohongshuCardImages = [];
   } else {
     await mkdir(path.resolve(cwd, args.output), {recursive: true});
     dailyPackage.videoOutputs = await renderPackageVideos({cwd, dailyPackage});
+    dailyPackage.xiaohongshuCardImages = await renderXiaohongshuCards({issues: dailyPackage.issues});
   }
 
   const packageDir = await writeDailyPackage({
     outputDir: path.resolve(cwd, args.output),
     dailyPackage
   });
+
+  if (reviewData) {
+    await writeFile(
+      path.join(packageDir, 'review-summary.json'),
+      JSON.stringify(reviewResult.summary, null, 2)
+    );
+  }
 
   console.log(`Digest package written to ${packageDir}`);
   return packageDir;

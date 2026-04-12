@@ -1,11 +1,11 @@
 import {createJuyaStyleCard} from '../cards/juya-style-card.js';
 
 const CATEGORY_LABELS = {
-  top: '要闻',
+  top: '重点',
   model: '模型发布',
-  dev: '开发生态',
+  dev: '开发者动态',
   product: '产品应用',
-  insight: '技术与洞察',
+  insight: '技术观察',
   industry: '行业动态'
 };
 
@@ -117,22 +117,21 @@ function escapeHtml(text) {
     .replace(/'/g, '&#39;');
 }
 
-function convertInlineMarkdown(text) {
-  return escapeHtml(text).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-}
-
 function overviewHtml(groups) {
   const sections = [];
   for (const category of CATEGORY_ORDER) {
     const issues = groups.get(category);
     if (!issues?.length) continue;
+
     const items = issues
       .map((issue) => `<li><strong>${escapeHtml(issue.candidate.title)}</strong> <code>#${issue.number}</code></li>`)
       .join('');
+
     sections.push(
       `<section class="overview-group"><h3>${CATEGORY_LABELS[category]}</h3><ul>${items}</ul></section>`
     );
   }
+
   return sections.join('');
 }
 
@@ -159,7 +158,7 @@ function articleSectionsHtml(issues) {
 
 function createWechatHtml({date, issues}) {
   const groups = groupIssues(issues);
-  const lead = issues[0] ? escapeHtml(issueSummary(issues[0])) : '今日 AI 资讯精选';
+  const lead = issues[0] ? escapeHtml(issueSummary(issues[0])) : '今日 AI 资讯精选。';
 
   return [
     '<article class="juya-daily">',
@@ -184,7 +183,7 @@ function createWechatHtml({date, issues}) {
     '.footer-note{margin:12px 24px 0;color:#9a3412;font-size:13px;}',
     '</style>',
     '<header class="hero">',
-    '<span class="eyebrow">橘鸦式 AI 早报</span>',
+    '<span class="eyebrow">橘鸦风格 AI 早报</span>',
     `<h1>AI 早报 ${escapeHtml(date)}</h1>`,
     `<p>${lead}</p>`,
     '</header>',
@@ -203,12 +202,7 @@ function buildSrt(issues) {
   const lines = [];
   for (const [index, issue] of issues.entries()) {
     const end = current + issue.durationSeconds;
-    lines.push(
-      `${index + 1}`,
-      `${toTimestamp(current)} --> ${toTimestamp(end)}`,
-      `${issue.candidate.title}。${issue.candidate.content}`,
-      ''
-    );
+    lines.push(`${index + 1}`, `${toTimestamp(current)} --> ${toTimestamp(end)}`, `${issue.candidate.title}。${issue.candidate.content}`, '');
     current = end;
   }
   return lines.join('\n');
@@ -221,38 +215,124 @@ function toTimestamp(totalSeconds) {
   return `${hours}:${minutes}:${seconds},000`;
 }
 
+function buildDouyinHook(issue) {
+  const conclusion = issue.story.oneLineConclusion || issue.candidate.title;
+  if (issue.candidate.newsType === 'model') {
+    return `3 秒看懂：${conclusion}`;
+  }
+  if (issue.candidate.newsType === 'research') {
+    return `研究突破来了：${conclusion}`;
+  }
+  if (issue.candidate.newsType === 'tooling') {
+    return `开发者注意：${conclusion}`;
+  }
+  return `今天最值得看的一条：${conclusion}`;
+}
+
+function shortText(text, maxLength) {
+  const value = String(text || '').replace(/\s+/g, ' ').trim();
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+}
+
+function createBilibiliIntroSegment({date, issues}) {
+  const issueCount = issues.length;
+  return {
+    headline: `AI 早报 ${date}`,
+    summary: `今天精选 ${issueCount} 条 AI 动态`,
+    narration: `这里是 ${date} 的 AI 早报。今天我们精选了 ${issueCount} 条最值得关注的人工智能动态，重点看模型发布、产品能力和企业级代理进展。`,
+    source: 'Zaobao',
+    visualHint: 'opening-card'
+  };
+}
+
+function createBilibiliOutroSegment() {
+  return {
+    headline: '以上就是今天的 AI 早报',
+    summary: '继续关注模型、技术和产品更新',
+    narration: '以上就是今天的 AI 早报。如果你想继续追踪模型、技术和产品更新，我们下期继续见。',
+    source: 'Zaobao',
+    visualHint: 'closing-card'
+  };
+}
+
+function createDouyinOpeningSegment({date, issues}) {
+  return {
+    headline: `1 分钟看完 ${issues.length} 条 AI 动态`,
+    summary: `${date} 快报，只看模型、产品能力和 agent 进展`,
+    narration: `这里是 ${date} 的 AI 快报。接下来用 1 分钟带你看完 ${issues.length} 条最值得关注的人工智能动态。`,
+    source: 'Zaobao',
+    visualHint: 'douyin-opening-card',
+    density: 'high'
+  };
+}
+
+function createDouyinIssueSegment(issue, index, total) {
+  return {
+    headline: shortText(issue.candidate.title, 24),
+    summary: shortText(issue.story.oneLineConclusion, 42),
+    narration: [
+      `第 ${index + 1} 条，${issue.candidate.title}。`,
+      shortText(issue.story.oneLineConclusion, 60),
+      issue.story.whyImportant
+    ].join(''),
+    source: issue.candidate.source,
+    visualHint: issue.story.recommendedVisualType || issue.scriptSegment.visualHint,
+    density: 'high',
+    ranking: index + 1,
+    totalItems: total
+  };
+}
+
+function createDouyinClosingSegment({issues}) {
+  return {
+    headline: '完整解读看 B 站和公众号',
+    summary: `今天一共 ${issues.length} 条，收藏这条快报，稍后回看`,
+    narration: '以上就是今天的 AI 快报。完整解读可以看 B 站主片和公众号长文。',
+    source: 'Zaobao',
+    visualHint: 'douyin-closing-card',
+    density: 'high'
+  };
+}
+
+function createDouyinJob({date, issues, theme}) {
+  const segments = [
+    createDouyinOpeningSegment({date, issues}),
+    ...issues.map((issue, index) => createDouyinIssueSegment(issue, index, issues.length)),
+    createDouyinClosingSegment({issues})
+  ];
+
+  return {
+    id: `${date}-douyin`,
+    platform: 'douyin',
+    outputKey: 'douyin',
+    width: 1080,
+    height: 1920,
+    title: `AI 快报 ${date}`,
+    orientation: 'portrait',
+    theme,
+    segments
+  };
+}
+
 function createRenderJobs({date, issues, theme}) {
   return [
     {
       id: `${date}-bilibili`,
       platform: 'bilibili',
+      outputKey: 'bilibili',
       width: 1920,
       height: 1080,
       title: `AI 早报 ${date}`,
       orientation: 'landscape',
       theme,
-      segments: issues.map((issue) => issue.scriptSegment)
+      segments: [
+        createBilibiliIntroSegment({date, issues}),
+        ...issues.map((issue) => issue.scriptSegment),
+        createBilibiliOutroSegment()
+      ]
     },
-    {
-      id: `${date}-douyin`,
-      platform: 'douyin',
-      width: 1080,
-      height: 1920,
-      title: issues[0]?.candidate.title || `AI 早报 ${date}`,
-      orientation: 'portrait',
-      theme,
-      segments: issues.slice(0, 2).map((issue) => issue.scriptSegment)
-    },
-    {
-      id: `${date}-xiaohongshu`,
-      platform: 'xiaohongshu',
-      width: 1080,
-      height: 1920,
-      title: issues[1]?.candidate.title || issues[0]?.candidate.title || `AI 早报 ${date}`,
-      orientation: 'portrait',
-      theme,
-      segments: issues.slice(0, 2).map((issue) => issue.scriptSegment)
-    }
+    createDouyinJob({date, issues, theme})
   ];
 }
 
@@ -263,9 +343,34 @@ export function createDailyPackage({date, digestPlan, config}) {
   const wechatHtml = createWechatHtml({date, issues});
   const renderJobs = createRenderJobs({date, issues, theme: config.theme});
   const card = createJuyaStyleCard({date, issues, theme: config.theme});
+  const issueDocument = {
+    date,
+    issueCount: issues.length,
+    reviewSummary: digestPlan.reviewSummary || null,
+    items: issues.map((issue) => ({
+      id: issue.id,
+      rank: issue.rank,
+      title: issue.story.title,
+      oneLineConclusion: issue.story.oneLineConclusion,
+      whyImportant: issue.story.whyImportant,
+      keyFacts: issue.story.keyFacts,
+      sources: issue.story.sources,
+      recommendedVisualType: issue.story.recommendedVisualType,
+      durationSeconds: issue.durationSeconds,
+      sourceType: issue.candidate.sourceType,
+      newsType: issue.candidate.newsType,
+      score: issue.candidate.score,
+      clusterId: issue.candidate.clusterId,
+      reviewStatus: issue.review?.status || 'pending',
+      reviewNotes: issue.review?.notes || ''
+    }))
+  };
 
   return {
     date,
+    issues,
+    candidatePool: digestPlan.candidatePool,
+    issueDocument,
     masterDigest,
     wechatMarkdown,
     wechatHtml,
@@ -282,24 +387,38 @@ export function createDailyPackage({date, digestPlan, config}) {
     douyinMeta: [
       '# 抖音发布文案',
       '',
-      '今天只讲最值得看的两条 AI 大新闻，节奏会快一点。',
-      `主切片：${issues[0]?.candidate.title || 'AI 早报'}`
+      '今日输出 1 条 60 秒左右的高密度快报，前 3 秒直接给结论。',
+      '',
+      '## 覆盖新闻',
+      ...issues.map((issue, index) => `- 第 ${index + 1} 条：${issue.candidate.title}`),
+      '',
+      '## 前 3 秒钩子',
+      ...issues.slice(0, 2).map((issue, index) => `- 钩子 ${index + 1}：${buildDouyinHook(issue)}`),
+      '',
+      '- 节奏要求：一镜一结论，整条视频约 60 秒，保持高密度连续快报。'
     ].join('\n'),
     xiaohongshuNote: [
       '# 小红书笔记',
       '',
-      '3 分钟看完今日 AI 精选。',
+      '今日改为图文卡片，不做视频。每张卡片只讲一条新闻，建议按顺序滑动浏览。',
       '',
-      '## 封面建议',
+      '## 标题建议',
       '',
-      `- 主标题：${issues[0]?.candidate.title || `AI 早报 ${date}`}`,
-      '- 风格：清爽简洁、暖橘与淡粉信息卡'
+      `- ${date} AI 早报｜${issues.length} 条全球 AI 要点速读`,
+      '',
+      '## 标签建议',
+      '',
+      '- #AI早报 #人工智能 #大模型 #科技资讯',
+      '',
+      '## 卡片顺序',
+      ...issues.slice(0, 6).map((issue, index) => `- 第 ${index + 1} 张：${issue.candidate.title}`)
     ].join('\n'),
     reviewReport: [
       '# 审校报告',
       '',
       `- 本期条目数：${issues.length}`,
       `- 预计主片时长：${digestPlan.totalDurationSeconds} 秒`,
+      `- 候选池规模：${digestPlan.candidatePool.length}`,
       `- 去重说明：${digestPlan.reviewReport}`
     ].join('\n'),
     renderJobs

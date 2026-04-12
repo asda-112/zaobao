@@ -7,7 +7,8 @@
     "test": "node test/run-tests.js",
     "digest": "node src/cli/build-digest.js",
     "render": "node src/cli/render-digest.js",
-    "build": "node src/cli/build-digest.js --help"
+    "build": "node src/cli/build-digest.js --help",
+    "schedule:windows": "node src/cli/setup-windows-schedule.js"
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.340",

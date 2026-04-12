@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {collectCandidatesSafely} from '../src/collectors/index.js';
+import {collectUrlItem} from '../src/collectors/url.js';
 import {parseRssItems} from '../src/collectors/rss.js';
+import {defaultSources} from '../src/config/default-sources.js';
+import {normalizeCandidate} from '../src/core/candidate-normalizer.js';
 import {buildVoiceoverTimeline} from '../src/render/build-voiceover-timeline.js';
 
 test('parseRssItems normalizes RSS entries into candidate items', () => {
@@ -99,4 +102,106 @@ test('collectCandidatesSafely keeps fixture results even when a remote source fa
   assert.ok(result.items.length > 0);
   assert.equal(result.failures.length, 1);
   assert.equal(result.failures[0].sourceId, 'broken-rss');
+});
+
+test('collectCandidatesSafely supports official-rss alias and reports unsupported source types', async () => {
+  const result = await collectCandidatesSafely({
+    cwd: 'E:\\zaobao',
+    sources: [
+      {
+        id: 'sample-fixture',
+        type: 'fixture',
+        name: 'Sample Fixture',
+        path: 'data/fixtures/sample-ai-news.json',
+        tags: ['ai', 'fixture']
+      },
+      {
+        id: 'unsupported-source',
+        type: 'unknown-type',
+        name: 'Unsupported',
+        tags: ['broken']
+      }
+    ]
+  });
+
+  assert.ok(result.items.length > 0);
+  assert.equal(result.failures.length, 1);
+  assert.equal(result.failures[0].sourceId, 'unsupported-source');
+  assert.match(result.failures[0].message, /Unsupported source type/);
+});
+
+test('normalizeCandidate preserves explicit wechat metadata as a supplementary non-primary source', () => {
+  const normalized = normalizeCandidate({
+    item: {
+      id: 'wechat-1',
+      title: '智谱 AI 更新 GLM 模型能力',
+      source: '智谱AI',
+      url: 'https://mp.weixin.qq.com/s/example',
+      publishedAt: '2026-04-10T05:00:00.000Z',
+      content: '智谱发布了新的模型更新与开发者能力。',
+      tags: ['ai', 'wechat', 'model'],
+      score: 68
+    },
+    source: {
+      id: 'opencli-weixin-zhipu',
+      type: 'opencli',
+      name: '智谱AI',
+      sourceType: 'wechat',
+      tier: 'C',
+      isPrimarySource: false,
+      tags: ['ai', 'wechat', 'zhipu', 'model']
+    }
+  });
+
+  assert.equal(normalized.sourceType, 'wechat');
+  assert.equal(normalized.isPrimarySource, false);
+  assert.equal(normalized.tier, 'C');
+  assert.equal(normalized.newsType, 'model');
+});
+
+test('defaultSources ship with local RSSHub defaults and expanded official + wechat seeds', () => {
+  const officialSources = defaultSources.filter((source) => source.sourceType === 'official');
+  const wechatSources = defaultSources.filter((source) => source.sourceType === 'wechat');
+  const rsshubSources = defaultSources.filter((source) => source.type === 'rsshub');
+  const fixtureSources = defaultSources.filter((source) => source.type === 'fixture');
+
+  assert.ok(officialSources.length >= 8, 'expected at least 8 official sources');
+  assert.ok(wechatSources.length >= 5, 'expected at least 5 wechat seed sources');
+  assert.ok(rsshubSources.length >= 2, 'expected at least 2 rsshub sources');
+  assert.equal(fixtureSources.length, 0, 'default sources should not include fixture data in high-quality mode');
+  assert.ok(
+    rsshubSources.every((source) => String(source.rsshubUrl || source.url || '').startsWith('http://127.0.0.1:1200')),
+    'rsshub sources should default to the local localhost instance'
+  );
+});
+
+test('collectUrlItem respects manual metadata overrides for high-quality verified sources', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    text: async () =>
+      '<html><head><title>Fallback title</title></head><body><p>Fallback body text from the remote page.</p></body></html>'
+  });
+
+  try {
+    const item = await collectUrlItem({
+      source: {
+        id: 'verified-url-source',
+        type: 'url',
+        name: 'Verified Source',
+        url: 'https://example.com/story',
+        publishedAt: '2026-04-10T14:30:00.000Z',
+        titleOverride: 'Verified title override',
+        contentOverride: 'Verified content override from manual source review.',
+        tags: ['ai', 'verified'],
+        baseScore: 88
+      }
+    });
+
+    assert.equal(item.title, 'Verified title override');
+    assert.equal(item.content, 'Verified content override from manual source review.');
+    assert.equal(item.publishedAt, '2026-04-10T14:30:00.000Z');
+    assert.equal(item.score, 88);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

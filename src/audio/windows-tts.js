@@ -1,7 +1,8 @@
-import {mkdir} from 'node:fs/promises';
+import {access, mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 
+import {resolveWindowsPowerShellExecutable} from './runtime-paths.js';
 import {getWavDurationSeconds} from './wav-duration.js';
 
 function escapeForPowerShell(text) {
@@ -9,8 +10,15 @@ function escapeForPowerShell(text) {
 }
 
 function runPowerShell(command) {
+  const executable = resolveWindowsPowerShellExecutable();
+  if (!executable) {
+    return Promise.reject(
+      new Error('Unable to locate Windows PowerShell. Set ZAOBAO_POWERSHELL_BIN to the full executable path.')
+    );
+  }
+
   return new Promise((resolve, reject) => {
-    const child = spawn('powershell', ['-NoProfile', '-Command', command], {
+    const child = spawn(executable, ['-NoProfile', '-Command', command], {
       stdio: 'ignore'
     });
 
@@ -25,7 +33,7 @@ function runPowerShell(command) {
   });
 }
 
-export async function synthesizeSegments({segments, outputDir}) {
+export async function synthesizeSegmentsWithWindowsTts({segments, outputDir}) {
   await mkdir(outputDir, {recursive: true});
   const synthesized = [];
 
@@ -42,6 +50,7 @@ export async function synthesizeSegments({segments, outputDir}) {
     ].join(' ');
 
     await runPowerShell(command);
+    await access(filePath);
     const durationSeconds = await getWavDurationSeconds(filePath);
     synthesized.push({
       ...segment,
@@ -51,4 +60,8 @@ export async function synthesizeSegments({segments, outputDir}) {
   }
 
   return synthesized;
+}
+
+export async function synthesizeSegments({segments, outputDir}) {
+  return synthesizeSegmentsWithWindowsTts({segments, outputDir});
 }

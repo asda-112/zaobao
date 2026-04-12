@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 
-import {synthesizeSegments} from '../audio/windows-tts.js';
+import {synthesizeSegments} from '../audio/synthesize-segments.js';
 import {buildVoiceoverTimeline} from './build-voiceover-timeline.js';
 
 const BACKGROUND = 'FFF7ED';
@@ -186,7 +186,9 @@ function msToSrt(ms) {
 
 export async function renderPackageVideosWithFfmpeg({dailyPackage}) {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'zaobao-ffmpeg-'));
-  const outputs = {};
+  const outputs = {
+    douyinClips: []
+  };
 
   for (const job of dailyPackage.renderJobs) {
     const jobDir = path.join(tempDir, job.platform);
@@ -213,7 +215,13 @@ export async function renderPackageVideosWithFfmpeg({dailyPackage}) {
 
     const outputPath = path.join(jobDir, `${job.platform}.mp4`);
     await concatVideos(segmentVideos, outputPath);
-    outputs[job.platform] = await readFile(outputPath);
+    const buffer = await readFile(outputPath);
+    const outputKey = job.outputKey || job.platform;
+    outputs[outputKey] = buffer;
+
+    if (job.platform === 'douyin') {
+      outputs.douyinClips.push(buffer);
+    }
 
     if (job.platform === 'bilibili') {
       dailyPackage.bilibiliSrt = timeline.captions

@@ -3,8 +3,11 @@ import path from 'node:path';
 
 import {collectBrowserItem} from './browser.js';
 import {collectFixtureItems} from './fixture.js';
+import {collectOpenCliItems} from './opencli.js';
 import {parseRssItems} from './rss.js';
+import {collectRsshubItems} from './rsshub.js';
 import {collectUrlItem} from './url.js';
+import {normalizeCandidatesBatch} from '../core/candidate-normalizer.js';
 
 async function collectRssItems({source}) {
   const response = await fetch(source.url);
@@ -23,23 +26,42 @@ export async function collectCandidates({cwd, sources}) {
 
   for (const source of sources) {
     if (source.type === 'fixture') {
-      allItems.push(...(await collectFixtureItems({source, cwd})));
+      const items = await collectFixtureItems({source, cwd});
+      allItems.push(...normalizeCandidatesBatch({items, source}));
       continue;
     }
 
-    if (source.type === 'rss') {
-      allItems.push(...(await collectRssItems({source})));
+    if (source.type === 'rss' || source.type === 'official-rss') {
+      const items = await collectRssItems({source});
+      allItems.push(...normalizeCandidatesBatch({items, source}));
+      continue;
+    }
+
+    if (source.type === 'rsshub') {
+      const items = await collectRsshubItems({source});
+      allItems.push(...normalizeCandidatesBatch({items, source}));
+      continue;
+    }
+
+    if (source.type === 'opencli') {
+      const items = await collectOpenCliItems({source});
+      allItems.push(...normalizeCandidatesBatch({items, source}));
       continue;
     }
 
     if (source.type === 'url') {
-      allItems.push(await collectUrlItem({source}));
+      const item = await collectUrlItem({source});
+      allItems.push(...normalizeCandidatesBatch({items: [item], source}));
       continue;
     }
 
     if (source.type === 'browser') {
-      allItems.push(await collectBrowserItem({source}));
+      const item = await collectBrowserItem({source});
+      allItems.push(...normalizeCandidatesBatch({items: [item], source}));
+      continue;
     }
+
+    throw new Error(`Unsupported source type: ${source.type}`);
   }
 
   return allItems;

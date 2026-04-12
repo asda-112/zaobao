@@ -1,11 +1,10 @@
-import {renderPackageVideosWithFfmpeg} from './ffmpeg-renderer.js';
 import {renderPackageVideosWithRemotion} from './remotion-renderer.js';
 
 export async function renderPackageVideos({cwd, dailyPackage}) {
-  const engine = process.env.ZAOBAO_RENDER_ENGINE || 'ffmpeg';
-  if (engine === 'remotion') {
-    return renderPackageVideosWithRemotion({cwd, dailyPackage});
+  const engine = process.env.ZAOBAO_RENDER_ENGINE || 'remotion';
+  if (engine !== 'remotion') {
+    throw new Error(`High-quality mode only supports Remotion rendering. Received: ${engine}`);
   }
 
-  return renderPackageVideosWithFfmpeg({dailyPackage});
+  return renderPackageVideosWithRemotion({cwd, dailyPackage});
 }
