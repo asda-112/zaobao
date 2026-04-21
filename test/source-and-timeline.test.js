@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {collectCandidatesSafely} from '../src/collectors/index.js';
 import {collectUrlItem} from '../src/collectors/url.js';
 import {parseRssItems} from '../src/collectors/rss.js';
-import {defaultSources} from '../src/config/default-sources.js';
+import {buildDefaultSources, defaultSources} from '../src/config/default-sources.js';
 import {normalizeCandidate} from '../src/core/candidate-normalizer.js';
 import {buildVoiceoverTimeline} from '../src/render/build-voiceover-timeline.js';
 
@@ -104,6 +104,37 @@ test('collectCandidatesSafely keeps fixture results even when a remote source fa
   assert.equal(result.failures[0].sourceId, 'broken-rss');
 });
 
+test('collectCandidatesSafely supports manual verified items as real first-party sources', async () => {
+  const result = await collectCandidatesSafely({
+    cwd: 'E:\\zaobao',
+    sources: [
+      {
+        id: 'manual-openai-x',
+        type: 'manual',
+        name: 'OpenAI on X',
+        sourceType: 'official',
+        tier: 'A',
+        isPrimarySource: true,
+        tags: ['ai', 'x', 'openai', 'official'],
+        items: [
+          {
+            title: 'OpenAI clarifies Pro tier Codex usage on X',
+            url: 'https://x.com/OpenAI/status/2042296046009626989',
+            publishedAt: '2026-04-09T17:38:16.000Z',
+            content: 'OpenAI clarified the new Pro tier structure and said the existing $200 plan remains the highest usage option.',
+            newsType: 'product'
+          }
+        ]
+      }
+    ]
+  });
+
+  assert.equal(result.failures.length, 0);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].sourceType, 'official');
+  assert.equal(result.items[0].isPrimarySource, true);
+});
+
 test('collectCandidatesSafely supports official-rss alias and reports unsupported source types', async () => {
   const result = await collectCandidatesSafely({
     cwd: 'E:\\zaobao',
@@ -173,6 +204,18 @@ test('defaultSources ship with local RSSHub defaults and expanded official + wec
     rsshubSources.every((source) => String(source.rsshubUrl || source.url || '').startsWith('http://127.0.0.1:1200')),
     'rsshub sources should default to the local localhost instance'
   );
+});
+
+test('buildDefaultSources can enable official X sources as tier-A primary feeds', () => {
+  const sources = buildDefaultSources({enableXOfficialSources: true});
+  const xOfficialSources = sources.filter((source) => source.platform === 'x');
+
+  assert.ok(xOfficialSources.length >= 5, 'expected at least 5 official X sources');
+  assert.ok(xOfficialSources.every((source) => source.type === 'rsshub'));
+  assert.ok(xOfficialSources.every((source) => source.sourceType === 'official'));
+  assert.ok(xOfficialSources.every((source) => source.isPrimarySource === true));
+  assert.ok(xOfficialSources.every((source) => source.tier === 'A'));
+  assert.ok(xOfficialSources.every((source) => String(source.rsshubUrl).includes('/twitter/user/')));
 });
 
 test('collectUrlItem respects manual metadata overrides for high-quality verified sources', async () => {

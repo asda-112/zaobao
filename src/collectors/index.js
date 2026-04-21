@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import {collectBrowserItem} from './browser.js';
 import {collectFixtureItems} from './fixture.js';
+import {collectManualItems} from './manual.js';
 import {collectOpenCliItems} from './opencli.js';
 import {parseRssItems} from './rss.js';
 import {collectRsshubItems} from './rsshub.js';
@@ -25,6 +26,12 @@ export async function collectCandidates({cwd, sources}) {
   const allItems = [];
 
   for (const source of sources) {
+    if (source.type === 'manual') {
+      const items = await collectManualItems({source});
+      allItems.push(...normalizeCandidatesBatch({items, source}));
+      continue;
+    }
+
     if (source.type === 'fixture') {
       const items = await collectFixtureItems({source, cwd});
       allItems.push(...normalizeCandidatesBatch({items, source}));
